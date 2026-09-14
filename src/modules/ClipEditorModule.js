@@ -201,17 +201,21 @@ export class ClipEditorModule extends Module {
     this.#subscribe(app.bus);
 
     this.refreshClip();
-    this.view.updateSpacer();
     this.view.o.scroller.scrollTop = pitchToRow(60) * this.view.rowHeight - this.view.o.scroller.clientHeight / 2;
   }
 
-  /** Release every listener, subscription, command and panel of this module. */
+  /**
+   * Release every listener, subscription, command and panel of this module.
+   *
+   * `this.view` is deliberately kept: TimelineView has no teardown of its own,
+   * so the scroller and ruler listeners it installed outlive dispose and a
+   * late scroll or wheel event still calls back into `render()`.
+   */
   dispose() {
     for (const undo of this.#cleanups.reverse()) undo();
     this.#cleanups = [];
     if (this.#observer) this.#observer.disconnect();
     this.#observer = null;
-    this.view = null;
     this.#dom = null;
     this.#keysCtx = null;
     this.#nDrag = null;
@@ -262,6 +266,7 @@ export class ClipEditorModule extends Module {
 
   /** Draw the piano roll: lanes, grid, region, notes, playhead and ruler. */
   render() {
+    if (!this.view) return;
     const c = this.view.grid;
     const { W, H, sx, sy, drawW, firstRow, lastRow } = this.view.viewport();
     const rh = this.view.rowHeight;
@@ -346,12 +351,14 @@ export class ClipEditorModule extends Module {
 
   // ===== State changes =====
 
-  /** Announce a change to the notes of the selected clip and redraw. */
+  /**
+   * Announce a change to the notes of the selected clip. The `clip:notes`
+   * event comes straight back to this module's own subscription, which
+   * resizes the spacer and redraws.
+   */
   notesChanged() {
     const clip = this.#project.selectedClip;
     if (clip) this.#project.notesChanged(clip);
-    this.view.updateSpacer();
-    this.view.requestRender();
   }
 
   /** Update the toolbar and the roll after the selected clip changed. */
