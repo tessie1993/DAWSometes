@@ -54,6 +54,9 @@ src/modules/               KeyboardModule, PanelsModule, TransportModule (also e
 test/                      *.test.mjs
 ```
 
+Diagrams of the layers, the inheritance tree, the module wiring and the parameter flow are in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
 `src/core/App.js` is the composition root: it owns the `EventBus`, a map of named services
 (`provide(name, service)` / `get(name)` / `has(name)`, where `get` of an unprovided service throws)
 and the list of installed modules. `app.dispose()` disposes them in reverse order.
