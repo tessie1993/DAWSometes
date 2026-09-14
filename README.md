@@ -21,7 +21,7 @@ Open the printed URL. The server is dependency-free and reads `PORT` (default `8
 
 ```sh
 npm test                  # node --test test/
-node tools/smoke.mjs      # headless-Chromium smoke check
+node tools/smoke.mjs      # headless-Chromium smoke check (SMOKE_HEADLESS=0 runs headed; SMOKE_TIMEOUT=<ms> and SMOKE_SCREENSHOT=<path> are also read)
 ```
 
 `package.json` contains scripts only — no dependencies. The tests are `node:test` files;
@@ -94,6 +94,10 @@ await new App()
   .use(new DemoSongModule())    // 13
   .start();
 ```
+
+The chain above shows the dependency order only: the real `src/main.js` keeps the app in a `const
+app`, exposes it as `globalThis.dawsome` for console debugging, and awaits `app.start()` inside a
+`try`/`catch` that logs a startup failure.
 
 ### Services
 
@@ -384,15 +388,22 @@ parameter object handed to the device, its keys matching the schema paths:
 
 ```json
 "instrument\\MonoSynth\\Bassy": {
-  "volume": 10,
-  "oscillator": { "type": "sawtooth" },
-  "filter": { "Q": 2, "type": "bandpass", "rolloff": -24 },
-  "envelope": { "attack": 0.01, "decay": 0.1, "sustain": 0.2, "release": 0.6 }
+  "portamento": 0.08,
+  "oscillator": { "partials": [2, 1, 3, 2, 0.4] },
+  "filter": { "Q": 4, "type": "lowpass", "rolloff": -48 },
+  "envelope": { "attack": 0.04, "decay": 0.06, "sustain": 0.4, "release": 1 },
+  "filterEnvelope": {
+    "attack": 0.01, "decay": 0.1, "sustain": 0.6, "release": 1.5,
+    "baseFrequency": 50, "octaves": 3.4
+  }
 }
 ```
 
 Preset bodies are partial — `"instrument\\MonoSynth\\Default"` is `{}` — and a preset may name a
 parameter the device does not have, which `ParameterMatrix.apply` reports in its `unknown` list
-instead of creating. The bank also carries presets for devices `devices.json` does not declare
-(`BitCrusher`, `Chebyshev`, `Chorus`, `FeedbackDelay`, `PitchShift`, `Tremolo`, `Vibrato`); adding
-the schema entry is what puts such a device in the catalog.
+instead of creating. An array value such as `oscillator.partials` above is a single leaf: `flatten`
+and `unflatten` in `paths.js` recurse into plain objects only.
+
+The bank also carries presets for devices `devices.json` does not declare (`BitCrusher`,
+`Chebyshev`, `Chorus`, `FeedbackDelay`, `PitchShift`, `Tremolo`, `Vibrato`); adding the schema entry
+is what puts such a device in the catalog.

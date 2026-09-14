@@ -24,11 +24,6 @@ export class PanelsModule extends Module {
   /** @type {Array<() => void>} bus unsubscribe functions. */
   #unsubscribes = [];
 
-  /** @returns {string} the module name. */
-  get name() {
-    return "PanelsModule";
-  }
-
   /**
    * Publish the panel registry as the `panels` service.
    * @param {object} app the application.
@@ -54,7 +49,6 @@ export class PanelsModule extends Module {
 
     const list = this.#panels.list();
     if (this.#panels.activeId === null && list.length > 0) this.#panels.show(list[0].id);
-    this.#applyActive(this.#panels.activeId);
   }
 
   /** Remove the tab strip content and every subscription this module added. */
