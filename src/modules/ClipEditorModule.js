@@ -406,8 +406,6 @@ export class ClipEditorModule extends Module {
       clip.length = clamp(Number(controls.lenInput.value) || clip.length / BEATS_PER_BAR, 0.25, 256) * BEATS_PER_BAR;
       controls.lenInput.value = clip.length / BEATS_PER_BAR;
       this.#project.clipChanged(clip);
-      this.view.updateSpacer();
-      this.view.requestRender();
     });
 
     this.#listen(controls.gridSelect, "change", () => {
