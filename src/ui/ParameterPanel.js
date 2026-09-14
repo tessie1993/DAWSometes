@@ -140,12 +140,13 @@ export class ParameterPanel {
    */
   #showValue(widget, parameter) {
     if (widget.tagName === "SELECT") {
+      const value = parameter.isSet ? String(parameter.value) : "";
+      ParameterPanel.#dropStaleOptions(widget, value);
       if (!parameter.isSet) {
         widget.value = "";
         return;
       }
-      const value = String(parameter.value);
-      if (![...widget.options].some((option) => option.value === value)) widget.appendChild(ParameterPanel.#option(parameter.value));
+      if (![...widget.options].some((option) => option.value === value)) widget.appendChild(ParameterPanel.#option(parameter.value, true));
       widget.value = value;
       return;
     }
@@ -168,12 +169,30 @@ export class ParameterPanel {
   }
 
   /**
-   * Build one <option> for an enum value.
+   * Build one <option> for an enum value. A synthetic option stands in for a
+   * value the type's list does not know about and is marked so it can be
+   * cleaned up once the value moves on.
    * @param {string|number} value
+   * @param {boolean} [synthetic=false] whether the option was invented for an out-of-list value
    * @returns {HTMLElement}
    */
-  static #option(value) {
-    return el("option", { text: String(value), attrs: { value: String(value) } });
+  static #option(value, synthetic = false) {
+    const dataset = synthetic ? { synthetic: "1" } : {};
+    return el("option", { text: String(value), attrs: { value: String(value) }, dataset });
+  }
+
+  /**
+   * Drop the synthetic options left over from earlier out-of-list values, so a
+   * run of preset changes cannot make the select accumulate dead entries. The
+   * option matching `keep` survives, and options that came from `type.values`
+   * are never touched.
+   * @param {HTMLSelectElement} select
+   * @param {string} keep value of the option to preserve, "" to drop them all
+   */
+  static #dropStaleOptions(select, keep) {
+    for (const option of [...select.options]) {
+      if (option.dataset.synthetic === "1" && option.value !== keep) option.remove();
+    }
   }
 
   /**
