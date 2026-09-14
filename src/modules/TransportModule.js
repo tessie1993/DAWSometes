@@ -15,8 +15,6 @@ const MAX_BPM = 300;
  * `transport:follow` on the application bus.
  */
 export class Transport {
-  /** @type {object} the project being played. */
-  #project;
   /** @type {object} the `audio` service (AudioEngine). */
   #audio;
   /** @type {object} the application event bus. */
@@ -31,12 +29,13 @@ export class Transport {
 
   /**
    * @param {object} deps
-   * @param {object} deps.project the project to play.
+   * @param {object} deps.project the project to play; accepted for API
+   *   symmetry with the other services and unused today.
    * @param {object} deps.audio the `audio` service (AudioEngine).
    * @param {object} deps.bus the application event bus.
    */
+  // eslint-disable-next-line no-unused-vars
   constructor({ project, audio, bus }) {
-    this.#project = project;
     this.#audio = audio;
     this.#bus = bus;
   }
@@ -115,11 +114,6 @@ export class TransportModule extends Module {
   #unsubscribes = [];
   /** @type {Array<{ target: EventTarget, type: string, handler: EventListener }>} DOM listeners. */
   #listeners = [];
-
-  /** @returns {string} the module name. */
-  get name() {
-    return "TransportModule";
-  }
 
   /**
    * Create the transport, publish it as a service and register its command.

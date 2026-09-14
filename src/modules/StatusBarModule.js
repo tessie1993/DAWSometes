@@ -18,11 +18,6 @@ export class StatusBarModule extends Module {
   /** @type {HTMLElement|null} the `#hint` element, once bound. */
   #hint = null;
 
-  /** @returns {string} the module name. */
-  get name() {
-    return "StatusBarModule";
-  }
-
   /**
    * Publish the status service.
    * @param {object} app the application.
