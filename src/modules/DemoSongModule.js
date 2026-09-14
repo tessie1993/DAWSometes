@@ -32,11 +32,6 @@ const CLOSED_HAT_PATTERN = [
  * creates model objects; drawing and playback are other modules' work.
  */
 export class DemoSongModule extends Module {
-  /** @returns {string} the module name. */
-  get name() {
-    return "DemoSongModule";
-  }
-
   /**
    * Build the demo tracks and clips and select the first kick clip.
    * @param {object} app the application.

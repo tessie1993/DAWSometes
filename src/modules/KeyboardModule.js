@@ -17,11 +17,6 @@ export class KeyboardModule extends Module {
   /** @type {((event: MouseEvent) => void)|null} the click listener. */
   #onClick = null;
 
-  /** @returns {string} the module name. */
-  get name() {
-    return "KeyboardModule";
-  }
-
   /**
    * Publish the command registry as the `commands` service.
    * @param {object} app the application.
