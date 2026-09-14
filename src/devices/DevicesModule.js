@@ -35,6 +35,9 @@ export class DevicesModule extends Module {
   async start(app) {
     const catalog = await DeviceCatalog.load();
 
+    // Called as a bare identifier, so fetch keeps the global receiver;
+    // DeviceCatalog.load() only rebinds because its default parameter
+    // captures globalThis.fetch into a detached reference.
     const response = await fetch(PRESETS_URL);
     if (!response.ok) {
       throw new Error(`Failed to load presets from "${PRESETS_URL}": HTTP ${response.status}.`);
