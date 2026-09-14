@@ -402,19 +402,18 @@ export class ArrangementModule extends Module {
       const el = e.target.closest(".track");
       if (!el) return;
       const track = this.#trackOf(el);
+      // index.html selected the track before branching, so every click on a
+      // header selects it — the mute and delete buttons, the instrument and
+      // preset selects and the name field included. Selecting with only a
+      // trackId keeps the current clip.
+      project.select({ trackId: track.id });
       if (e.target.classList.contains("mute")) {
         project.setTrackMute(track, !track.mute);
       } else if (e.target.classList.contains("del")) {
         project.removeTrack(track.id);
-      } else if (
-        e.target.classList.contains("inst") ||
-        e.target.classList.contains("instPreset") ||
-        e.target.classList.contains("name")
-      ) {
-        return;
-      } else {
-        project.select({ trackId: track.id });
       }
+      // .inst, .instPreset and .name only select here; the change listener
+      // below does their actual work.
     });
 
     this.#listen(this.#trackHeaders, "change", (e) => {
