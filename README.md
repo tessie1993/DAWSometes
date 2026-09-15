@@ -1,14 +1,16 @@
 # DAWSome
 
-A browser DAW that runs from a static directory with no build step and no dependencies: an
-arrangement of track lanes and clips, a piano-roll clip editor, a device panel over the Tone.js
-instruments and effects, a mixer, Standard MIDI File import and a demo song. The app is a set of
+A browser DAW that runs from a static directory with no build step: an arrangement of track lanes
+and clips, a piano-roll clip editor, a device panel over the Tone.js instruments and effects, a
+mixer, Standard MIDI File import and a demo song. The app is a set of
 plain ES modules plugged into one `App`, with Tone.js 14.8.49 loaded from cdnjs. Every value the app
 can change at run time — a track's volume, pan and mute as much as an oscillator type deep inside a
 synth — is a typed entry in one **parameter matrix**, addressed by a string such as
 `device/3/envelope/attack`: typed from `devices.json`, written by presets and by the UI, and
 mirrored back from the audio engine. Adding a feature is one module file and one line in
 `src/main.js`; adding an instrument or effect is an entry in a JSON file and no code at all.
+Running the app needs nothing installed; a webpack build into `dist/` is available for deploying,
+and is the only thing the dev dependencies are for.
 
 ## Run
 
@@ -21,20 +23,45 @@ Open the printed URL. The server is dependency-free and reads `PORT` (default `8
 
 ```sh
 npm test                  # node --test "test/*.test.mjs"
-node tools/smoke.mjs      # headless-Chromium smoke check (SMOKE_HEADLESS=0 runs headed; SMOKE_TIMEOUT=<ms> and SMOKE_SCREENSHOT=<path> are also read)
+node tools/smoke.mjs      # headless-Chromium smoke check (SMOKE_HEADLESS=0 runs headed; SMOKE_TIMEOUT=<ms>, SMOKE_SCREENSHOT=<path> and SMOKE_ROOT=<dir> are also read)
 ```
 
-`package.json` contains scripts only — no dependencies. The tests are `node:test` files;
-`tools/smoke.mjs` drives the page with a globally installed Playwright.
+The tests are `node:test` files; `tools/smoke.mjs` drives the page with a globally installed
+Playwright. Neither needs `npm install`.
+
+### Build
+
+`npm start` serves the sources as they are, so a build is optional. `npm run build` bundles the
+same sources into `dist/` for deploying to a static host:
+
+```sh
+npm install               # webpack, webpack-cli and html-webpack-plugin — build only
+npm run build             # webpack --mode production → dist/
+npm run watch             # rebuild on change, unminified
+```
+
+`dist/` holds `index.html`, one hashed `dawsome.<hash>.js` with its source map, `devices.json`,
+`preset-bank.json` and `styles/app.css` — everything the page fetches, under the paths it asks
+for. Tone.js stays out of the bundle: the app reads it as the `Tone` global, so the built page
+loads it from the CDN exactly as the served one does. `webpack.config.js` builds its HTML from
+`index.html` itself, swapping the `src/main.js` tag for the bundle, so the shell has one copy.
+
+Serving the repository (`npm start`) and opening `/dist/` runs the built page, because every
+path in it is relative. To run the smoke checks against a build instead of the sources:
+
+```sh
+npm run build && SMOKE_ROOT=dist node tools/smoke.mjs
+```
 
 ## Architecture
 
 ```
 index.html                 shell markup only
 styles/app.css             all CSS
-package.json               scripts only, no dependencies
+package.json               scripts, the browser baseline and the build-only dev dependencies
+webpack.config.js          optional production bundle into dist/ (npm run build)
 tools/serve.mjs            zero-dependency static server (PORT env, default 8080)
-tools/smoke.mjs            headless-Chromium smoke check
+tools/smoke.mjs            headless-Chromium smoke check (SMOKE_ROOT picks the directory)
 src/main.js                composition: new App().use(...13 modules...).start()
 src/core/                  EventBus, Module, App, CommandRegistry, PanelRegistry
 src/params/                types.js, paths.js, ParameterGroup.js, Parameter.js, ParameterMatrix.js
