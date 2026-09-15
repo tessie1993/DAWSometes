@@ -20,7 +20,7 @@ Open the printed URL. The server is dependency-free and reads `PORT` (default `8
 `PORT=3000 npm start` moves it. The page needs network access to load Tone.js from the CDN.
 
 ```sh
-npm test                  # node --test test/
+npm test                  # node --test "test/*.test.mjs"
 node tools/smoke.mjs      # headless-Chromium smoke check (SMOKE_HEADLESS=0 runs headed; SMOKE_TIMEOUT=<ms> and SMOKE_SCREENSHOT=<path> are also read)
 ```
 
