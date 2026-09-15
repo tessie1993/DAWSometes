@@ -20,7 +20,7 @@ Open the printed URL. The server is dependency-free and reads `PORT` (default `8
 `PORT=3000 npm start` moves it. The page needs network access to load Tone.js from the CDN.
 
 ```sh
-npm test                  # node --test test/
+npm test                  # node --test "test/*.test.mjs"
 node tools/smoke.mjs      # headless-Chromium smoke check (SMOKE_HEADLESS=0 runs headed; SMOKE_TIMEOUT=<ms> and SMOKE_SCREENSHOT=<path> are also read)
 ```
 
@@ -53,6 +53,9 @@ src/modules/               KeyboardModule, PanelsModule, TransportModule (also e
                            MixerModule, MidiImportModule, DemoSongModule
 test/                      *.test.mjs
 ```
+
+Diagrams of the layers, the inheritance tree, the module wiring and the parameter flow are in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 `src/core/App.js` is the composition root: it owns the `EventBus`, a map of named services
 (`provide(name, service)` / `get(name)` / `has(name)`, where `get` of an unprovided service throws)

@@ -16,6 +16,7 @@ import { PresetBank } from "../src/devices/PresetBank.js";
 import { DeviceCatalog } from "../src/devices/DeviceCatalog.js";
 import { DEMO_DEVICES, DEFAULT_TRACK_DEVICE } from "../src/devices/defaultDevices.js";
 import { ParameterMatrix } from "../src/params/ParameterMatrix.js";
+import { flatten } from "../src/params/paths.js";
 
 const readJson = (name) => JSON.parse(readFileSync(new URL(`../${name}`, import.meta.url), "utf8"));
 
@@ -235,16 +236,21 @@ describe("Device", () => {
     assert.equal(device.parameter("envelope/attack").address, `${device.prefix}/envelope/attack`);
   });
 
-  test("options given at creation seed the matrix", () => {
+  test("options given at creation stay on the device; attach writes no values", () => {
     const catalog = new DeviceCatalog(schemas());
     const matrix = new ParameterMatrix();
-    const device = catalog.create("Synth", { options: { volume: -6, envelope: { attack: 0.02 } } });
+    const options = { volume: -6, envelope: { attack: 0.02 } };
+    const device = catalog.create("Synth", { options });
 
     device.attach(matrix);
 
-    assert.equal(matrix.value(`${device.prefix}/volume`), -6);
-    assert.equal(matrix.value(`${device.prefix}/envelope/attack`), 0.02);
-    assert.deepEqual(device.snapshot(), { volume: -6, envelope: { attack: 0.02 } });
+    // The node is built from `options`; the matrix only learns the values once
+    // the engine mirrors them back (see the syncValues tests below).
+    assert.equal(device.options, options);
+    assert.equal(matrix.require(`${device.prefix}/volume`).isSet, false);
+    assert.equal(matrix.value(`${device.prefix}/volume`), undefined);
+    assert.equal(matrix.value(`${device.prefix}/envelope/attack`), undefined);
+    assert.deepEqual(device.snapshot(), {});
   });
 
   test("syncValues sets known paths and registers unknown ones as inferred", () => {
@@ -268,15 +274,35 @@ describe("Device", () => {
     assert.equal(matrix.require(`${device.prefix}/volume`).inferred, false);
   });
 
-  test("loadPreset applies the preset parameters", () => {
+  test("loadPreset replaces the options with a copy of the preset", () => {
     const catalog = new DeviceCatalog(schemas());
     const matrix = new ParameterMatrix();
     const device = catalog.create("MonoSynth");
     device.attach(matrix);
+    const preset = bank().get("MonoSynth", "Bah");
 
-    device.loadPreset(bank().get("MonoSynth", "Bah"));
+    device.loadPreset(preset);
 
     assert.equal(device.presetName, "Bah");
+    assert.deepEqual(device.options, preset.parameters);
+    assert.notEqual(device.options, preset.parameters, "options must be a private copy");
+    assert.notEqual(device.options.filter, preset.parameters.filter, "nested objects are copied too");
+    // Nothing reaches the matrix until the engine rebuilds the node and
+    // mirrors its values; Project.applyPreset triggers that with track:devices.
+    assert.equal(matrix.value(`${device.prefix}/envelope/attack`), undefined);
+    assert.deepEqual(device.snapshot(), {});
+  });
+
+  test("a preset reaches the matrix once the engine mirrors the rebuilt node", () => {
+    const catalog = new DeviceCatalog(schemas());
+    const matrix = new ParameterMatrix();
+    const device = catalog.create("MonoSynth");
+    device.attach(matrix);
+    device.loadPreset(bank().get("MonoSynth", "Bah"));
+
+    // What ToneAudioEngine.#syncDevice does after `new Tone.MonoSynth(options)`.
+    device.syncValues(flatten(device.options), "engine");
+
     assert.equal(matrix.value(`${device.prefix}/envelope/attack`), 0.01);
     assert.equal(matrix.value(`${device.prefix}/filter/Q`), 2);
     assert.equal(matrix.value(`${device.prefix}/filter/rolloff`), -24);
