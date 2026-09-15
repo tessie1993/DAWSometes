@@ -171,7 +171,9 @@ flowchart TD
 Outside `src/`: `index.html` is the shell markup (every element id the modules bind to),
 `styles/app.css` the only stylesheet, `devices.json` and `preset-bank.json` the data files fetched
 at start, `tools/serve.mjs` the static server, `tools/smoke.mjs` the headless browser check and
-`test/*.test.mjs` the `node:test` unit tests.
+`test/*.test.mjs` the `node:test` unit tests. `webpack.config.js` bundles the same graph into
+`dist/` for deployment; it reads `index.html` as its template and imports nothing from `src/`, so
+no module knows whether it was bundled.
 
 ## 2. Inheritance
 

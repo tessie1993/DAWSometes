@@ -16,6 +16,8 @@
  *   SMOKE_HEADLESS=0          Run Chromium headed so you can watch the run (default: headless).
  *   SMOKE_TIMEOUT=<ms>        Per-operation timeout in milliseconds (default: 20000).
  *   SMOKE_SCREENSHOT=<path>   Write a full-page screenshot to <path> after the checks.
+ *   SMOKE_ROOT=<dir>          Directory to serve (default: the repository root). Point it at
+ *                             dist/ to run these checks against a webpack build.
  *
  * Output
  *   A JSON summary { url, passed, failed, results, consoleErrors } on stdout.
@@ -28,6 +30,7 @@
  */
 
 import { createRequire } from "node:module";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 
@@ -38,7 +41,14 @@ import { createServer } from "./serve.mjs";
 // ---------------------------------------------------------------------------
 
 /** Repository root: this file lives in <root>/tools/. */
-const ROOT = fileURLToPath(new URL("..", import.meta.url));
+const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url));
+
+/**
+ * Directory the static server serves. The repository root runs the checks
+ * against the unbundled sources; SMOKE_ROOT=dist runs the same checks against
+ * a webpack build, which is what makes the bundle verifiable.
+ */
+const ROOT = process.env.SMOKE_ROOT ? resolve(process.env.SMOKE_ROOT) : REPOSITORY_ROOT;
 
 /** Headed mode is opt-in via SMOKE_HEADLESS=0. */
 const HEADLESS = process.env.SMOKE_HEADLESS !== "0";

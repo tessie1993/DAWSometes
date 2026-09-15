@@ -430,3 +430,6 @@ FodyWeavers.xsd
 
 # Claude Code worker worktrees (never commit)
 .claude/worktrees/
+
+# Webpack bundle output
+dist/
